@@ -23,6 +23,8 @@ sudo ln -s /usr/local/apache-maven-3.3.3/bin/mvn /usr/local/bin/mvn
 ```
 sudo apt-get install r-base-core
 ```
+R
+```
 R> install.packages("evaluate", dependencies = TRUE)
 R> install.packages("base64enc", dependencies = TRUE)
 ```
