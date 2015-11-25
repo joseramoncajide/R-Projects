@@ -9,3 +9,23 @@ sudo apt-get install openjdk-7-jdk
 sudo apt-get install npm
 sudo apt-get install libfontconfig
 ```
+
+### Install Maven
+
+```
+# install maven
+wget http://www.eu.apache.org/dist/maven/maven-3/3.3.3/binaries/apache-maven-3.3.3-bin.tar.gz
+sudo tar -zxf apache-maven-3.3.3-bin.tar.gz -C /usr/local/
+sudo ln -s /usr/local/apache-maven-3.3.3/bin/mvn /usr/local/bin/mvn
+```
+
+### Build
+```
+cd Desktop/Apache/incubator-zeppelin-rinterpreter
+mvn clean package -DskipTests
+```
+
+### Start
+```
+$ ./bin/zeppelin-daemon.sh start
+```
