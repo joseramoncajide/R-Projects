@@ -7,6 +7,7 @@
 - Detecting the impact of a Twitter Hashtag in the number of Followers 
 - Detecting the impact of a Twitter Hashtag in the number of Facebook Likes 
 
-## TODO
+#### TODO
 
 - [Interactive Data Science with R in Apache Zeppelin Notebook](http://blog.sparkiq-labs.com/2015/11/16/interactive-data-science-with-r-in-apache-zeppelin-notebook/)
+- [Create a Remarketing List with Predictive Analytics](https://github.com/GoogleCloudPlatform/google-analytics-premium-bigquery-statistics)
