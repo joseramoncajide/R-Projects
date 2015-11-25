@@ -12,3 +12,4 @@ Date | Twitter Followers
 ### Readings:
 * [Breakout detection in the wild](https://blog.twitter.com/2014/breakout-detection-in-the-wild)
 * [Evaluating BreakoutDetection](http://randyzwitch.com/twitter-breakoutdetection-r-package-evaluation/)
+* [Twitter’s Anomaly Detection Package](http://probdist.com/twitters-anomaly-detection-package/)
