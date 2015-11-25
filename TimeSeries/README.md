@@ -8,3 +8,7 @@
 Date | Twitter Followers
 ------------ | -------------
 2015-11-20 | 3849
+
+### Readings:
+* [Breakout detection in the wild](https://blog.twitter.com/2014/breakout-detection-in-the-wild)
+* [Evaluating BreakoutDetection](http://randyzwitch.com/twitter-breakoutdetection-r-package-evaluation/)
