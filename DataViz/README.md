@@ -1,5 +1,28 @@
 # Visualizing Data
 
+## Configure Ubuntu 
+
+### Resize disk
+- Clone the .vmdk image to a .vdi.
+- Resize the new .vdi image (30720 == 30 GB).
+- Optional; switch back to a .vmdk.
+```
+vboxmanage clonehd "virtualdisk.vmdk" "new-virtualdisk.vdi" --format vdi
+vboxmanage modifyhd "new-virtualdisk.vdi" --resize 30720
+VBoxManage clonehd "cloned.vdi" "resized.vmdk" --format vmdk
+```
+
+### Create a swap partition using [GNOME Partition Editor - GParted](http://gparted.org/livecd.php) and configure it
+- Get the UUID for the partition
+- Edit fstab and add/modify UUID=3aec9d69-737e-4840-94ca-45d01f2aed05 none   swap    sw      0       0
+- Check if enabled after reboot
+```
+sudo blkid /dev/sda2
+sudo nano /etc/fstab
+cat /proc/meminfo
+```
+
+
 ## R & Apache Zeppelin
 
 ```
