@@ -7,6 +7,8 @@
 - Detecting the impact of a Twitter Hashtag in the number of Followers 
 - Detecting the impact of a Twitter Hashtag in the number of Facebook Likes 
 
+
+##  R Text Mining
 ### [Textmining](Textmining)
 - A video recommender system based on other users video plays
 - Keyword/Tag analysis from videos.
