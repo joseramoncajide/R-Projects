@@ -6,4 +6,4 @@ This project includes:
 - DataViz with ggplot2
 - Text mining algorithms for video tags
 - Natural language processing
-- A video recomender
+- A video recomender based on other users video plays
