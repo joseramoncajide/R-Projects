@@ -1,0 +1,23 @@
+1. Instalar R en el servidor donde se va a ejecutar el script
+2. Crear / Editar el archivo: ~/.Rprofile
+3. Agregar al mismo:
+
+## Default repo
+local({r <- getOption("repos"); 
+       r["CRAN"] <- "http://cran.r-project.org"; options(repos=r)})
+       
+4. Modificar el parámetro 'path' en run.R para reflejar la ruta hasta la ubicación del script       
+5. Dar permisos de ejecución al archivo run.sh y ejecutar el script
+
+
+
+Notas: 
+- Es recomendable ejecutar el script la primera vez desde dentro de R para poder comprobar que la instalación de los paquetes necesarios se completa con éxito.
+Para ello entrar en R:
+> R
+Desde el prompt de R ejecutar:
+> source('run.R')
+- El usuario con el que se ejecuta el archivo y R deberá tener permisos de escritura dentro del directorio de instalación del script
+- Pudes ser neceario instalar previamente algún paquete de forma manual:
+R> install.packages("Rcpp")
+R> install.packages("data.table")

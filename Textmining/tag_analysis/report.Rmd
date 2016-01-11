@@ -1,0 +1,258 @@
+---
+title: "TUBES: Listados de videos, actores y actrices"
+author: '@elartedemedir'
+date: "10 de enero de 2016"
+output:
+  html_document:
+    fig_caption: no
+    theme: cerulean
+    toc: yes
+---
+
+
+Se muestra a continuación un resumen de los listados obtenidos mediante los datos recogidos en  Google Analytics para el periodo comprendido entre `r start.date` y `r end.date`.
+
+Para ello se realizan las siguientes consultas a la api de Google Analytics (Vista: `r ga.profileId`)
+
+**Categorías de vídeos**
+```
+metrics = "ga:productDetailViews,ga:productAddsToCart,ga:cartToDetailRate"
+dimensions = "ga:dimension4,ga:productSku,ga:productName,ga:productCategoryHierarchy" 
+sort = "-ga:productAddsToCart"
+filters = "ga:productCategoryHierarchy!@(not set);ga:productAddsToCart>100"
+```
+**Actores y actrices**
+```
+metrics = "ga:productListViews,ga:productDetailViews,ga:productAddsToCart,ga:cartToDetailRate"
+dimensions = "ga:dimension4,ga:productSku,ga:dimension17,ga:dimension15,ga:productName" 
+sort = "-ga:productAddsToCart"
+filters = "ga:dimension17!=(not set);ga:productAddsToCart>100"
+```
+**Tags**
+```
+metrics = "ga:productListViews,ga:productDetailViews,ga:productAddsToCart,ga:cartToDetailRate", 
+dimensions = "ga:dimension4,ga:productSku,ga:dimension13,ga:dimension15,ga:dimension16,ga:productName", 
+sort = "-ga:productAddsToCart", 
+filters = "ga:dimension13!=(not set);ga:productAddsToCart>100", 
+```
+**Interacciones sociales**
+```
+metrics = "ga:uniqueSocialInteractions", 
+dimensions = "ga:dimension4,ga:socialInteractionTarget", 
+sort = "-ga:uniqueSocialInteractions", 
+filters = "ga:socialInteractionNetwork!=undefined;ga:pagePath=~(/video/|/films/|/видео/|/filmy/|/videolari/|/porn-video/|/filme/|/videos/);ga:socialInteractionTarget!~^http;ga:uniqueSocialInteractions>0",
+```
+**Engament time**
+```
+metrics = "ga:uniqueEvents,ga:eventValue", 
+dimensions = "ga:eventLabel", 
+sort = "-ga:eventValue", 
+filters = "ga:eventAction=@Time on screen;ga:uniqueEvents>0",
+```
+
+Los resultados de dichas consulta son almacenados en memoria en sus correspondientes dataframes conteniendo todos los datos obtenidos referencia al site al que pertenecen dentro de la red.
+
+Ejmeplo de dataframe:
+```{r kable, echo=FALSE}
+kable(head(tbl_df(video.categories.metrics.df), 3), digits=2)
+```
+
+Una vez cruzados los dataframes, se obtienen métricas nuevas, como la la *tasa de engament* para cada vídeo $eng.ratio = engament.time / lenght * 100$ y se realizan las agrupaciones y cálculos necesarios para cada uno de los listados.
+
+A cada video o actriz se le asigna, dentro de cada uno de los listados una nueva varible `rank` que indica su posición dentro del mismo. 
+
+Dichos listados está disponibles para su integración en el directorio data y de tres formas distintas:
+
+* Mediante ficheros csv
+* En ficheros json
+* En tablas sql dentro del fichero tubes.db (SQLite)
+
+Mediante la integración de estos listados es posible ordenar en la web, en base a las métricas obtenidas semanalmente, tanto vídeos como actores, así como generar listados del tipo "Los más votados, "lo más visto", lo más compartido", etc.
+
+
+Los gráficos incluidos a continuación son generados a partir de los datos obtenidos para cada uno de los listados y sólo muestran una parte de los mismos.
+
+
+```{r, echo=FALSE, results='hide',message=FALSE, warning=FALSE}
+
+# top played videos -------------------------------------------------------
+
+top_plays.plot <- top_plays.df  %>%  group_by(site) %>% top_n(3, wt=-rank) 
+tmp_reorder_v1 <- with(top_plays.plot,reorder(top_plays.plot$product.name, top_plays.plot$plays))
+v1 <- ggplot(top_plays.plot , aes(x=tmp_reorder_v1, y=plays, fill=factor(site))) + geom_bar(stat = "identity") + coord_flip()  + theme_bw(base_size = 12, base_family = "Helvetica") + theme()
+
+```
+
+# Top vídeos
+
+## Top vídeos por número de reproducciones
+
+Para obtener el top de videos por reproducciones se ha obtenido el número total de reproducciones (`plays`) para cada video en un periodo determinado.
+
+[Download CSV](top_plays.csv) | [Download Json](top_plays.json)
+
+```{r fig.width=14, fig.height=14, echo=FALSE}
+print(v1)
+```
+
+
+## Top videos por tasa de engagement
+
+```{r, echo=FALSE, results='hide',message=FALSE, message=F, warning=F}
+
+# top videos by engagement ------------------------------------------------
+
+top_engament.plot <- top_engament.df  %>%  group_by(site) %>% top_n(3, wt=-rank) 
+tmp_reorder_v1 <- with(top_engament.plot,reorder(top_engament.plot$product.name, top_engament.plot$eng.ratio))
+v2 <- ggplot(top_engament.plot , aes(x=tmp_reorder_v1, y=eng.ratio, fill=factor(site))) + geom_bar(stat = "identity") + coord_flip()  + theme_bw(base_size = 12) + theme()
+
+```
+
+
+La obtención del top vídeos por tasa de engagement se ha calculado inicialmente para todos los videos el tiempo que permanece un usuario viendo el vídeo. A continuación se ha procedido a calcular la tasa de engagement de cada video teniendo en cuenta la duración del mismo.
+
+A continuación y con el objeto de no tener en cuenta aquellos videos con una alta tasa de engagement y con un bajo número de reproducciones, se han mantenido únicamente los vídeos que se encuentrar en el 10% de vídeos más vistos de entro todos los visualizados en el periodo.
+
+Finalmente se a procedido a ordenar los videos en orden descendente por dicha tasa de engagement. De esta forma obtenemos videos los videos que suman una alta tasa de engagement y de reproducciones.
+
+[Download CSV](data/top_engagement.csv) | [Download Json](data/top_engagement.json)
+
+
+```{r fig.width=14, fig.height=14, echo=FALSE}
+print(v2)
+```
+
+
+
+
+## Top videos por categoría (Por reproducciones)
+
+```{r, echo=FALSE}
+
+# top videos by category --------------------------------------------------
+
+top_n_by_category.plot <- top_n_by_category.df %>%  filter(site == 'Pichaloca_es')%>%  group_by(product.category) %>% top_n(3, wt=-rank) 
+
+Data <- ddply(top_n_by_category.plot, .(product.category), 
+              transform, pos = cumsum(plays) - (0.5 * plays)) %>% arrange(rank)
+
+c0 <- ggplot(Data, aes(x=reorder(Data$product.category, Data$plays) , y=plays, fill=factor(product.sku))) + geom_bar(stat = "identity") + coord_flip()  + theme_bw(base_size = 12) + geom_text(aes(label = product.sku ,y= pos), size = 3) + theme(legend.position="none")   + 
+  xlab("Video Category") +
+  ylab("Total Video Plays") +
+  ggtitle(bquote(atop("Top 3 Played Videos by Category", atop(italic(.("Only for pichaloca_es", ""))))))                    
+
+
+
+```
+
+La siguiente tabla recoge, a modo de resumen, el top 3 de videos reproducidos dentro de su correspondiente categoría.
+
+[Download CSV](data/top_n_by_category.csv) | [Download Json](data/top_n_by_category.json)
+
+
+```{r fig.width=10, fig.height=8, echo=FALSE}
+print(c0)
+```
+
+##  Top vídeos más votados
+
+```{r, echo=FALSE}
+
+# top rated ---------------------------------------------------------------
+
+top_rating.plot <- top_rating.df  %>%  group_by(site)   %>% top_n(3, wt=-rank) 
+
+tmp_reorder_r1 <- with(top_rating.plot,reorder(top_rating.plot$product.name, top_rating.plot$ratings))
+v1 <- ggplot(top_rating.plot, aes(x=tmp_reorder_r1, y=ratings, fill=factor(site))) + geom_bar(stat = "identity") + coord_flip()  + theme_bw(base_size = 12, base_family = "Helvetica") + theme() + 
+  xlab("Video") +
+  ylab("Video Rating") +
+  ggtitle(bquote(atop("Top Videos by User Ratings", atop(italic(.("Grouped by Site", ""))))))     
+
+```
+
+
+
+[Download CSV](data/top_rated.csv) | [Download Json](data/top_rated.json)
+
+
+```{r fig.width=10, fig.height=8, echo=FALSE}
+print(v1)
+```
+
+##  Top vídeos más compartidos
+
+Top videos con más interacciones sociales (Facebook y Twitter)
+
+
+```{r, echo=FALSE}
+
+top_shares.plot <- top_shares.df  %>%  group_by(site)  %>%   filter(product.name != 'NA') %>% top_n(3, wt=-rank) 
+
+tmp_reorder_s1 <- with(top_shares.plot,reorder(top_shares.plot$product.sku, top_shares.plot$shares))
+s1 <- ggplot(top_shares.plot, aes(x=tmp_reorder_s1, y=shares, fill=factor(site))) + geom_bar(stat = "identity") + coord_flip()  + theme_bw(base_size = 12) + theme()  + 
+  xlab("Video") +
+  ylab("Video Shares") +
+  ggtitle(bquote(atop("Top 3 Shared Videos by Site", atop(italic(.("", ""))))))     
+
+
+
+```
+
+[Download CSV](data/top_shared.csv) | [Download Json](data/top_shared.json)
+
+```{r fig.width=10, fig.height=8, echo=FALSE}
+print(s1)
+```
+
+# Top actores/actrices
+
+```{r, echo=FALSE}
+
+# top Actors by plays -------------------------------------------------
+
+
+top_pornstar_plays.plot <- top_pornstar_plays.df %>% group_by(site) %>% top_n(3, wt=plays)
+tmp_reorder_p1 <- with(top_pornstar_plays.plot,reorder(top_pornstar_plays.plot$porn.star, top_pornstar_plays.plot$plays))
+
+p1 <- ggplot(top_pornstar_plays.plot, aes(x=tmp_reorder_p1, y=plays, fill=factor(site))) + geom_bar(stat = "identity") + coord_flip()  + theme_bw(base_size = 12, base_family = "Helvetica") + theme() + 
+  xlab("Actors") +
+  ylab("Total Video Plays") +
+  ggtitle(bquote(atop("Top Actors by Video Plays", atop(italic(.("Grouped by site", "")))))) 
+
+
+# top Actors by engagement ---------------------------------------------
+
+
+top_pornstar_engament.plot <- top_pornstar_engament.df %>% group_by(site) %>% top_n(3, wt=eng.ratio)
+
+
+tmp_reorder_p2 <- with(top_pornstar_engament.plot,reorder(top_pornstar_engament.plot$porn.star, top_pornstar_engament.plot$eng.ratio))
+
+p2 <- ggplot(top_pornstar_engament.plot, aes(x=tmp_reorder_p2, y=eng.ratio, fill=factor(site))) + geom_bar(stat = "identity") + coord_flip()  + theme_bw(base_size = 12) + theme() + 
+  xlab("Actors") +
+  ylab("Engagement Ratio") +
+  ggtitle(bquote(atop("Top Actors by Engagement Ratio", atop(italic(.("Grouped by site", ""))))))
+
+
+
+```
+
+Se ha obtenido el top de actores tanto por videos reproducidos como por tasa de engagement. Dado que los vídeos están asignados a varias pornstars se ha asignado el número de reproducciones así como la tasa de engagement a cada pornstar por igual obteniendo así un ranking global para cada uno de los actores/actrices .Finalmente obtener el valor medio para el periodo.
+
+Mediante el resultado obtenido se podrían ordenar tanto los actores en las secciones de pornstars, como sacar listas top de actores en diferentes secciones del site, ordenar vídeos en resultados de búsqueda por actor, etc.
+
+[Download Top Actors Plays CSV](data/top_pornstar_plays.csv) | [Download Download Top Actors Plays Json](data/top_pornstar_plays.json)
+
+[Download Top Actors Engament CSV](data/top_pornstar_engament.csv) | [Download Top Actors Engament Json](data/top_pornstar_engament.json)
+
+## Top actors por reproducciones de vídeos
+
+```{r fig.width=14, fig.height=14, echo=FALSE}
+print(p1)
+```
+
+## Top actors por tasa de engament
+
+```{r fig.width=14, fig.height=14, echo=FALSE}
+print(p2)
+```
